@@ -25,6 +25,22 @@
   <img src="docs/screenshot-history.png" width="46%" align="top" alt="History grouped by session">
 </p>
 
+## How to use
+
+Three ways to start. Each one stops by itself when the time is up.
+
+**1. Pick a contact**  
+Tap **+ Contact**. Pick a name. Pick a time. Tap **Start**.
+
+**2. Save a quick action**  
+Do the same, and tap **Save shortcut**. Next time it is one tap.
+
+**3. Send a link**  
+Tap **Share**. Send the link on WhatsApp. They keep it.
+When they need a code, they send the link back. You tap it and approve.
+
+It never starts by itself. You always tap. Codes only go to a name in your phone book.
+
 ## Features
 
 - Sessions of 5, 15 or 30 minutes, or 1 hour.
