@@ -14,8 +14,8 @@ android {
         applicationId = "com.guru.otprelay"
         minSdk = 26
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.1"
+        versionCode = 3
+        versionName = "1.2"
     }
 
     // App Links verification pins the signing certificate, so release builds must be signed with

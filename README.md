@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/seeknull/otp-relay/releases/latest"><b>Download APK — v1.1</b></a>
+  <a href="https://github.com/seeknull/otp-relay/releases/latest"><b>Download APK — v1.2</b></a>
   &nbsp;·&nbsp; Android 8.0+ &nbsp;·&nbsp; MIT
 </p>
 
