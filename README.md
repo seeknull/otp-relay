@@ -29,19 +29,17 @@
 
 Three ways to start. Each one stops by itself when the time is up.
 
-**1. Pick a contact**  
+**👤 1. Pick a contact**  
 Tap **+ Contact**. Pick a name. Pick a time. Tap **Start**.
 
-**2. Save a quick action**  
+**⚡ 2. Save a quick action**  
 Do the same, and tap **Save shortcut**. Next time it is one tap.
 
-**3. Send a link**  
+**🔗 3. Send a link**  
 Tap **Share**. Send the link on WhatsApp. They keep it.
 When they need a code, they send the link back. You tap it and approve.
 
-> [!IMPORTANT]
-> It never starts by itself. You always tap.
-> Codes only go to a name in your phone book.
+It never starts by itself. You always tap. Codes only go to a name in your phone book.
 
 ## Features
 
