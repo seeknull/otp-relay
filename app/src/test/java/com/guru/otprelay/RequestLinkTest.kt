@@ -127,4 +127,39 @@ class RequestLinkTest {
             RequestLink.parse("otprelay://request?to=%2B911234567890&mins=-5")!!.durationMillis,
         )
     }
+
+    // Links already sent to people must keep working. These are the exact shapes shared by
+    // earlier builds, including ones this version no longer generates.
+    @Test
+    fun `still parses a link shared by an older build`() {
+        val old = "https://seeknull.github.io/r/#to=%2B919000000011&mins=15"
+        val parsed = RequestLink.parse(old)!!
+
+        assertEquals("+919000000011", parsed.target.number)
+        assertEquals(15 * 60_000L, parsed.durationMillis)
+    }
+
+    @Test
+    fun `still parses an older link that carried a name`() {
+        val old = "https://seeknull.github.io/r/#to=%2B919000000011&name=Amma&mins=30"
+        val parsed = RequestLink.parse(old)!!
+
+        assertEquals("+919000000011", parsed.target.number)
+        assertEquals(30 * 60_000L, parsed.durationMillis)
+        assertNull(parsed.target.name)
+    }
+
+    @Test
+    fun `an older link asking for a day is clamped to the longest session now offered`() {
+        val old = "https://seeknull.github.io/r/#to=%2B919000000011&mins=1440"
+
+        assertEquals(60 * 60_000L, RequestLink.parse(old)!!.durationMillis)
+    }
+
+    @Test
+    fun `still parses the custom scheme form`() {
+        val old = "otprelay://request?to=%2B919000000011&mins=5"
+
+        assertEquals("+919000000011", RequestLink.parse(old)!!.target.number)
+    }
 }
