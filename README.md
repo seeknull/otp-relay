@@ -1,45 +1,47 @@
-<img src="docs/icon.png" width="88" align="left" alt="">
-
-# OTP Relay
-
-**Forward OTP texts to one person, for a set time.**
-Everything happens on your phone — no server, no SMS gateway, no network calls.
-
-<br clear="left">
-
-[**Download APK — v1.1**](https://github.com/seeknull/otp-relay/releases/latest) · Android 8.0+ · MIT
-
----
-
-Pick a number and a duration. While the session runs, any text containing "OTP" is relayed to that
-number over your own SIM. When the time is up, it stops on its own.
-
 <p align="center">
-  <img src="docs/screenshot-home.png" width="46%" alt="Home screen with quick actions">
-  &nbsp;
-  <img src="docs/screenshot-history.png" width="46%" alt="History grouped by session">
+  <img src="docs/icon.png" width="96" alt="">
 </p>
 
-<p align="center"><sub>Names and numbers above are made up.</sub></p>
+<h1 align="center">OTP Relay</h1>
+
+<p align="center">
+  <b>Forward OTP texts to one person, for a set time.</b>
+  <br>
+  Pick a contact and a duration; any text containing "OTP" is relayed over your own SIM
+  <br>
+  until the time is up. No server, no SMS gateway, no network calls.
+</p>
+
+<p align="center">
+  <a href="https://github.com/seeknull/otp-relay/releases/latest"><b>Download APK — v1.1</b></a>
+  &nbsp;·&nbsp; Android 8.0+ &nbsp;·&nbsp; MIT
+</p>
+
+<p align="center">
+  <img src="docs/screenshot-home.png" width="46%" align="top" alt="Home screen with quick actions">
+  &nbsp;
+  <img src="docs/screenshot-history.png" width="46%" align="top" alt="History grouped by session">
+</p>
 
 ## Features
 
 - Sessions of 5, 15 or 30 minutes, or 1 hour.
 - **Only saved contacts can receive OTPs.** A number has to be chosen from your phone book first,
   so a link from a stranger cannot point forwarding at an unknown number.
-- A short beep when a message is relayed, so you know without looking.
 - **No notification, no forwarding.** A session will not start without a visible notification, and
   stops itself within 5 seconds if that notification is ever blocked or removed.
-- Shortcuts — save a person and a duration, start with one tap.
+- Quick actions — save a person and a duration, start with one tap.
+- A short beep when a message is relayed, so you know without looking.
 - The recipient is texted when a session starts and when it ends.
 - Every message sent is logged, grouped by session, with how long it took to go out.
 - **Request links** — send someone a link; they send it back when they need an OTP. It opens the
   approval prompt with the details filled in. Nothing starts until you approve, and the number
   still has to be one of your contacts.
 
-A forwarded text names who it came from and is marked `(fwd by OTP Relay)`, so the recipient can
-tell which service sent the code. Sending is quick, because OTPs expire: the message
-reaches the modem before anything is written to disk, typically in well under 50 ms.
+A forwarded text names who the code came from and is marked `(fwd by OTP Relay)`.
+
+Sending is quick, because OTPs expire: the message reaches the modem before anything is written to
+disk, typically in well under 50 ms.
 
 ## Privacy
 
@@ -57,16 +59,15 @@ The usual caveat: whichever chat app you send a link through can see it, like an
 
 ## Permissions
 
-Five, all required.
-
-| | |
+| Permission | Why it is needed |
 | --- | --- |
 | `RECEIVE_SMS` | Read incoming texts during a session |
 | `SEND_SMS` | Send the forwarded text and the start/stop notices |
 | `POST_NOTIFICATIONS` | Show the "forwarding is on" notification |
-| `FOREGROUND_SERVICE`, `..._SPECIAL_USE` | Keep listening for the length of the session |
+| `FOREGROUND_SERVICE` | Keep listening for the length of the session |
+| `FOREGROUND_SERVICE_SPECIAL_USE` | The category that fits an SMS relay |
 
-Not requested: `READ_SMS`, `READ_CONTACTS`, `READ_PHONE_NUMBERS`,
+All five are required. Not requested: `READ_SMS`, `READ_CONTACTS`, `READ_PHONE_NUMBERS`,
 `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`.
 
 ## Build your own APK
@@ -78,11 +79,8 @@ git clone https://github.com/seeknull/otp-relay.git
 cd otp-relay
 echo "sdk.dir=$ANDROID_HOME" > local.properties
 
-./gradlew assembleDebug        # app/build/outputs/apk/debug/app-debug.apk
-./gradlew test                 # unit tests
-
-# made-up data for screenshots, held in memory only (debug builds)
-adb shell am start -n com.guru.otprelay/.MainActivity --ez demo true
+./gradlew test              # unit tests
+./gradlew assembleDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
@@ -97,9 +95,16 @@ keytool -genkeypair -v -keystore ~/otp-relay.keystore -alias otprelay \
   -Potprelay.storePassword=... -Potprelay.keyAlias=otprelay -Potprelay.keyPassword=...
 ```
 
-Keep that keystore: request links verify against the signing certificate, so a different key breaks
-them until you publish a matching `assetlinks.json` (see Notes). Without any keystore the release
-build is simply left unsigned.
+Keep that keystore. Request links verify against the signing certificate, so a different key breaks
+them until you publish a matching `assetlinks.json`. Without a keystore the release build is left
+unsigned.
+
+Debug builds can load made-up contacts and history for screenshots. It lives in memory only, so
+real data is untouched and returns on the next launch:
+
+```
+adb shell am start -n com.guru.otprelay/.MainActivity --ez demo true
+```
 
 ## Google Play
 
@@ -113,14 +118,14 @@ The core function is the problem, not the code. Sideloading has none of these li
 ## Notes
 
 - A reboot ends any running session, and only one session runs at a time.
-- "My number" is optional and typed once. It cannot be detected reliably — most carriers do not
-  write your number to the SIM.
-- Request links are verified App Links, so they open the app directly. Verification pins the
-  signing key, so release builds need the project keystore. Forking? Point `WEB_HOST` in
-  `RequestLink.kt` and the manifest at a host you control, and publish your own
-  [assetlinks.json](https://seeknull.github.io/.well-known/assetlinks.json).
-- Some phones kill background apps aggressively. For 6 hour and 1 day sessions, use the in-app
-  battery button.
+- "My number" is optional and typed once. It cannot be detected reliably, because most carriers do
+  not write your number to the SIM.
+- Request links are verified App Links, so they open the app directly rather than a browser.
+  Verification is tied to both the host and the signing key: if you fork this, point `WEB_HOST` in
+  `RequestLink.kt` and the `<intent-filter>` in the manifest at a host you control, then serve your
+  own certificate fingerprint from `/.well-known/assetlinks.json` on it.
+- Some phones stop background apps aggressively, which can cut a session short. Settings has a
+  shortcut to Android's battery screen if that happens.
 
 ## Licence
 
