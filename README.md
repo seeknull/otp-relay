@@ -5,7 +5,7 @@
 <h1 align="center">OTP Relay</h1>
 
 <p align="center">
-  <sub><i>For when family needs an OTP and you would rather not stop what you are doing.</i></sub>
+  <sub><i>For when someone you trust needs an OTP and you would rather not stop what you are doing.</i></sub>
 </p>
 
 <p align="center">
