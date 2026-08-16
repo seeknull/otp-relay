@@ -14,8 +14,8 @@ android {
         applicationId = "com.guru.otprelay"
         minSdk = 26
         targetSdk = 36
-        versionCode = 3
-        versionName = "1.2"
+        versionCode = 4
+        versionName = "1.3"
     }
 
     // App Links verification pins the signing certificate, so release builds must be signed with
@@ -39,6 +39,14 @@ android {
         release {
             isMinifyEnabled = false
             signingConfig = signingConfigs.findByName("release")
+        }
+        debug {
+            // Sign debug with the release key when it is available, so a downloaded release APK
+            // installs straight over a build made here. Android refuses to update an app whose
+            // signing certificate changed, and two keys would mean uninstalling to switch.
+            // Without the keystore this falls back to the default debug key, so anyone can still
+            // clone and build.
+            signingConfig = signingConfigs.findByName("release") ?: signingConfig
         }
     }
 

@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/seeknull/otp-relay/releases/latest"><b>Download APK — v1.2</b></a>
+  <a href="https://github.com/seeknull/otp-relay/releases/latest"><b>Download APK — v1.3</b></a>
   &nbsp;·&nbsp; Android 8.0+ &nbsp;·&nbsp; MIT
 </p>
 
@@ -123,9 +123,10 @@ keytool -genkeypair -v -keystore ~/otp-relay.keystore -alias otprelay \
   -Potprelay.storePassword=... -Potprelay.keyAlias=otprelay -Potprelay.keyPassword=...
 ```
 
-Keep that keystore. Request links verify against the signing certificate, so a different key breaks
-them until you publish a matching `assetlinks.json`. Without a keystore the release build is left
-unsigned.
+Keep that keystore. Debug builds are signed with it too when it is present, so a downloaded release
+APK installs straight over one you built yourself — Android blocks an update whenever the signing
+certificate changes. Without the keystore, debug falls back to the standard debug key and release is
+left unsigned.
 
 Debug builds can load made-up contacts and history for screenshots. It lives in memory only, so
 real data is untouched and returns on the next launch:
