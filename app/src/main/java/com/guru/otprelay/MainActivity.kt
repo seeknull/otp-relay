@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.mutableStateOf
+import com.guru.otprelay.data.DemoData
 import com.guru.otprelay.data.Preset
 import com.guru.otprelay.data.RequestLink
 import com.guru.otprelay.data.Store
@@ -24,6 +25,9 @@ class MainActivity : ComponentActivity() {
         // If the app was force-stopped mid-session the service died with it; bring it back so the
         // UI never claims to be forwarding while nothing is listening.
         if (Store.currentSession() != null) ForwardingService.start(this)
+
+        // Debug-only screenshot helper. Loads made-up data into memory; real data is untouched.
+        if (BuildConfig.DEBUG && intent?.getBooleanExtra("demo", false) == true) DemoData.load()
 
         request.value = RequestLink.parse(intent?.dataString)
 

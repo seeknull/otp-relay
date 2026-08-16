@@ -6,9 +6,7 @@ enum class DurationOption(val label: String, val millis: Long) {
     M5("5 min", 5 * 60_000L),
     M15("15 min", 15 * 60_000L),
     M30("30 min", 30 * 60_000L),
-    H1("1 hour", 60 * 60_000L),
-    H6("6 hours", 6 * 60 * 60_000L),
-    D1("1 day", 24 * 60 * 60_000L);
+    H1("1 hour", 60 * 60_000L);
 
     companion object {
         fun labelFor(millis: Long): String =

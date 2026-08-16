@@ -7,16 +7,24 @@ Everything happens on your phone — no server, no SMS gateway, no network calls
 
 <br clear="left">
 
-[**Download the APK →**](https://github.com/seeknull/otp-relay/releases/latest) · Android 8.0+ · MIT
+[**Download APK — v1.1**](https://github.com/seeknull/otp-relay/releases/latest) · Android 8.0+ · MIT
 
 ---
 
 Pick a number and a duration. While the session runs, any text containing "OTP" is relayed to that
 number over your own SIM. When the time is up, it stops on its own.
 
+<p align="center">
+  <img src="docs/screenshot-home.png" width="46%" alt="Home screen with quick actions">
+  &nbsp;
+  <img src="docs/screenshot-history.png" width="46%" alt="History grouped by session">
+</p>
+
+<p align="center"><sub>Names and numbers above are made up.</sub></p>
+
 ## Features
 
-- Sessions of 5 min, 15 min, 30 min, 1 hour, 6 hours or 1 day.
+- Sessions of 5, 15 or 30 minutes, or 1 hour.
 - **Only saved contacts can receive OTPs.** A number has to be chosen from your phone book first,
   so a link from a stranger cannot point forwarding at an unknown number.
 - A short beep when a message is relayed, so you know without looking.
@@ -29,7 +37,8 @@ number over your own SIM. When the time is up, it stops on its own.
   approval prompt with the details filled in. Nothing starts until you approve, and the number
   still has to be one of your contacts.
 
-Forwarded texts are marked `(fwd by OTP Relay)`. Sending is quick, because OTPs expire: the message
+A forwarded text names who it came from and is marked `(fwd by OTP Relay)`, so the recipient can
+tell which service sent the code. Sending is quick, because OTPs expire: the message
 reaches the modem before anything is written to disk, typically in well under 50 ms.
 
 ## Privacy
@@ -60,15 +69,37 @@ Five, all required.
 Not requested: `READ_SMS`, `READ_CONTACTS`, `READ_PHONE_NUMBERS`,
 `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`.
 
-## Build
+## Build your own APK
+
+Needs the Android SDK (platform 36) and JDK 17 or newer.
 
 ```
+git clone https://github.com/seeknull/otp-relay.git
+cd otp-relay
 echo "sdk.dir=$ANDROID_HOME" > local.properties
-./gradlew assembleDebug
+
+./gradlew assembleDebug        # app/build/outputs/apk/debug/app-debug.apk
+./gradlew test                 # unit tests
+
+# made-up data for screenshots, held in memory only (debug builds)
+adb shell am start -n com.guru.otprelay/.MainActivity --ez demo true
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Needs the Android SDK (platform 36) and JDK 17+. `./gradlew test` runs the unit tests.
+For a **release** APK, create a keystore once and point the build at it:
+
+```
+keytool -genkeypair -v -keystore ~/otp-relay.keystore -alias otprelay \
+  -keyalg RSA -keysize 2048 -validity 10000
+
+./gradlew assembleRelease \
+  -Potprelay.keystore=$HOME/otp-relay.keystore \
+  -Potprelay.storePassword=... -Potprelay.keyAlias=otprelay -Potprelay.keyPassword=...
+```
+
+Keep that keystore: request links verify against the signing certificate, so a different key breaks
+them until you publish a matching `assetlinks.json` (see Notes). Without any keystore the release
+build is simply left unsigned.
 
 ## Google Play
 

@@ -111,9 +111,9 @@ class RequestLinkTest {
     }
 
     @Test
-    fun `clamps an out of range duration to at most one day`() {
+    fun `clamps an out of range duration to the longest session offered`() {
         val parsed = RequestLink.parse("otprelay://request?to=%2B911234567890&mins=99999")!!
-        assertEquals(24 * 60 * 60_000L, parsed.durationMillis)
+        assertEquals(60 * 60_000L, parsed.durationMillis)
     }
 
     @Test

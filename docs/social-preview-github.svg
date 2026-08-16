@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#16243F"/>
+      <stop offset="100%" stop-color="#0C1524"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#bg)"/>
+
+  <!-- app mark -->
+  <g transform="translate(96,150) scale(1.55)">
+    <rect width="108" height="108" rx="24" fill="#1D3557"/>
+    <g fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M34,26 L74,26 Q86,26 86,38 L86,62 Q86,74 74,74 L52,74 L38,88 L38,74 L34,74 Q22,74 22,62 L22,38 Q22,26 34,26 Z"/>
+      <path d="M38,50 L70,50"/>
+      <path d="M60,40 L70,50 L60,60"/>
+    </g>
+  </g>
+
+  <g font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+    <text x="360" y="243" fill="#FFFFFF" font-size="86" font-weight="700">OTP Relay</text>
+    <text x="360" y="311" fill="#9FB3D0" font-size="35">Forward OTP texts to one person, for a set time.</text>
+
+    <!-- duration marks, matching the app palette -->
+    <g font-size="27" fill="#C8D6EA">
+      <circle cx="374" cy="392" r="10" fill="#21A179"/><text x="396" y="401">5 min</text>
+      <circle cx="524" cy="392" r="10" fill="#2D7DD2"/><text x="546" y="401">15 min</text>
+      <circle cx="686" cy="392" r="10" fill="#F5A623"/><text x="708" y="401">30 min</text>
+      <circle cx="854" cy="392" r="10" fill="#C2185B"/><text x="876" y="401">1 hour</text>
+    </g>
+
+    <text x="360" y="482" fill="#6F86A6" font-size="30">
+      No server · No SMS gateway · No network calls
+    </text>
+    <text x="360" y="530" fill="#6F86A6" font-size="30">Open source · MIT</text>
+  </g>
+</svg>

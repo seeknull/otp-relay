@@ -30,7 +30,7 @@ object RequestLink {
     private const val WEB_PREFIX = "https://$WEB_HOST$WEB_PATH"
 
     private const val MIN_MINUTES = 1L
-    private const val MAX_MINUTES = 24L * 60L
+    private const val MAX_MINUTES = 60L
     private const val DEFAULT_MINUTES = 15L
 
     /** The link to share: tappable in chat apps, opens straight into the approval prompt. */

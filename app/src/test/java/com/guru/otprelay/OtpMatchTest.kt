@@ -3,6 +3,10 @@ package com.guru.otprelay
 import com.guru.otprelay.data.DurationOption
 import com.guru.otprelay.data.OtpMatch
 import com.guru.otprelay.data.Target
+import com.guru.otprelay.ui.colorFor
+import com.guru.otprelay.ui.colorForMillis
+import com.guru.otprelay.ui.emojiAssignments
+import com.guru.otprelay.ui.emojiFor
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -66,13 +70,13 @@ class DurationOptionTest {
     fun `an odd duration from a link snaps to the closest option`() {
         assertEquals(DurationOption.M5, DurationOption.nearest(4 * 60_000L))
         assertEquals(DurationOption.M30, DurationOption.nearest(25 * 60_000L))
-        assertEquals(DurationOption.D1, DurationOption.nearest(30L * 60 * 60_000L))
+        assertEquals(DurationOption.H1, DurationOption.nearest(30L * 60 * 60_000L))
     }
 
     @Test
-    fun `the six offered durations are the ones asked for`() {
+    fun `the offered durations are the ones asked for`() {
         assertEquals(
-            listOf("5 min", "15 min", "30 min", "1 hour", "6 hours", "1 day"),
+            listOf("5 min", "15 min", "30 min", "1 hour"),
             DurationOption.entries.map { it.label },
         )
     }
@@ -89,5 +93,48 @@ class TargetTest {
     fun `the number is shown when there is no usable name`() {
         assertEquals("+911234567890", Target("+911234567890", null).display)
         assertEquals("+911234567890", Target("+911234567890", "  ").display)
+    }
+}
+
+class MarksTest {
+
+    @Test
+    fun `the same person always gets the same emoji`() {
+        assertEquals(emojiFor("+919876543210"), emojiFor("+919876543210"))
+    }
+
+    @Test
+    fun `saved contacts never share an emoji`() {
+        // A plain hash collides often enough to matter with only a handful of contacts.
+        val numbers = List(12) { "+9199000000${it.toString().padStart(2, '0')}" }
+        val marks = emojiAssignments(numbers)
+
+        assertEquals(numbers.size, marks.values.toSet().size)
+    }
+
+    @Test
+    fun `an assignment does not depend on the order contacts were added`() {
+        val numbers = listOf("+919000000001", "+919000000002", "+919000000003")
+
+        assertEquals(emojiAssignments(numbers), emojiAssignments(numbers.reversed()))
+    }
+
+    @Test
+    fun `formatting differences do not change the emoji`() {
+        // These are one person, so they must not look like two.
+        val expected = emojiFor("+91 98765 43210")
+        assertEquals(expected, emojiFor("9876543210"))
+        assertEquals(expected, emojiFor("098765-43210"))
+    }
+
+    @Test
+    fun `every duration has its own colour`() {
+        val colours = DurationOption.entries.map { colorFor(it) }
+        assertEquals(colours.size, colours.toSet().size)
+    }
+
+    @Test
+    fun `an unknown duration still gets a colour rather than crashing`() {
+        assertEquals(colorForMillis(7 * 60_000L), colorForMillis(9 * 60_000L))
     }
 }

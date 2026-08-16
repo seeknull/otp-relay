@@ -16,8 +16,12 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -41,6 +45,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.LinearProgressIndicator
@@ -61,6 +66,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
@@ -120,9 +127,9 @@ fun MainScreen(request: Preset?, onRequestHandled: () -> Unit) {
     var selectedNumber by rememberSaveable { mutableStateOf("") }
     var duration by rememberSaveable { mutableStateOf(DurationOption.M15) }
     val selected = numbers.firstOrNull { sameNumber(it.number, selectedNumber) }
+    val marks = remember(numbers) { emojiAssignments(numbers.map { it.number }) }
     var pending by remember { mutableStateOf<(() -> Unit)?>(null) }
     var pasted by remember { mutableStateOf<Preset?>(null) }
-    var confirming by remember { mutableStateOf<Preset?>(null) }
     var unknown by remember { mutableStateOf<Preset?>(null) }
     var unmatched by remember { mutableStateOf<Preset?>(null) }
     var verifying by remember { mutableStateOf<Preset?>(null) }
@@ -194,10 +201,12 @@ fun MainScreen(request: Preset?, onRequestHandled: () -> Unit) {
     /** A number that has never been used gets one confirmation before it is texted. */
     fun startSession(target: Target, millis: Long) {
         screen = Screen.HOME
-        when {
-            // Hard rule: OTPs only ever go to a number chosen from the phone book.
-            !Store.isKnownNumber(target.number) -> unknown = Preset(target, millis)
-            else -> confirming = Preset(target, millis)
+        // Hard rule: OTPs only ever go to a number chosen from the phone book. A contact that
+        // already cleared that bar starts straight away, with no extra prompt.
+        if (Store.isKnownNumber(target.number)) {
+            startConfirmed(target, millis)
+        } else {
+            unknown = Preset(target, millis)
         }
     }
 
@@ -250,6 +259,7 @@ fun MainScreen(request: Preset?, onRequestHandled: () -> Unit) {
                     now = now,
                     shortcuts = shortcuts,
                     numbers = numbers,
+                    marks = marks,
                     selected = selected,
                     duration = duration,
                     onStop = { ForwardingService.stop(context) },
@@ -267,6 +277,7 @@ fun MainScreen(request: Preset?, onRequestHandled: () -> Unit) {
 
                 Screen.HISTORY -> history(
                     sessions = sessions,
+                    marks = marks,
                     logs = logs,
                     activeId = activeSession?.id,
                     onClear = { Store.clearHistory() },
@@ -350,33 +361,6 @@ fun MainScreen(request: Preset?, onRequestHandled: () -> Unit) {
         )
     }
 
-    confirming?.let { first ->
-        AlertDialog(
-            onDismissRequest = { confirming = null },
-            title = { Text("Send OTPs to this number?") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    first.target.name?.let {
-                        Text(it, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    }
-                    Text(first.target.number, style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        "This is the first time you are using this number. Every text containing " +
-                            "“OTP” for the next ${DurationOption.labelFor(first.durationMillis)} " +
-                            "will be sent to it. Check the digits carefully.",
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    confirming = null
-                    startConfirmed(first.target, first.durationMillis)
-                }) { Text("Yes, forward to this number") }
-            },
-            dismissButton = { TextButton(onClick = { confirming = null }) { Text("Cancel") } },
-        )
-    }
 }
 
 @Composable
@@ -430,6 +414,7 @@ private fun LazyListScope.home(
     now: Long,
     shortcuts: List<Preset>,
     numbers: List<Target>,
+    marks: Map<String, String>,
     selected: Target?,
     duration: DurationOption,
     onStop: () -> Unit,
@@ -443,7 +428,7 @@ private fun LazyListScope.home(
 ) {
     item {
         AnimatedVisibility(visible = activeSession != null, enter = fadeIn(), exit = fadeOut()) {
-            activeSession?.let { ActiveCard(it, now, onStop) }
+            activeSession?.let { ActiveCard(it, marks, now, onStop) }
         }
     }
 
@@ -452,6 +437,7 @@ private fun LazyListScope.home(
             item {
                 ShortcutsCard(
                     shortcuts = shortcuts,
+                    marks = marks,
                     onStart = { onStart(it.target, it.durationMillis) },
                     onShare = { onShare(it.target, it.durationMillis) },
                     onDelete = onDeleteShortcut,
@@ -461,6 +447,7 @@ private fun LazyListScope.home(
         item {
             StartCard(
                 contacts = numbers,
+                marks = marks,
                 selected = selected,
                 duration = duration,
                 onPickContact = onPickContact,
@@ -476,6 +463,7 @@ private fun LazyListScope.home(
 
 private fun LazyListScope.history(
     sessions: List<Session>,
+    marks: Map<String, String>,
     logs: List<LogEntry>,
     activeId: Long?,
     onClear: () -> Unit,
@@ -498,7 +486,7 @@ private fun LazyListScope.history(
     }
 
     sessions.forEach { session ->
-        item(key = "s${session.id}") { SessionHeader(session, session.id == activeId) }
+        item(key = "s${session.id}") { SessionHeader(session, marks, session.id == activeId) }
         val entries = logs.filter { it.sessionId == session.id }
         if (entries.isEmpty()) {
             item(key = "e${session.id}") {
@@ -599,7 +587,7 @@ private fun LazyListScope.settings(
 }
 
 @Composable
-private fun ActiveCard(session: Session, now: Long, onStop: () -> Unit) {
+private fun ActiveCard(session: Session, marks: Map<String, String>, now: Long, onStop: () -> Unit) {
     val total = (session.expiresAt - session.startedAt).coerceAtLeast(1)
     val remaining = (session.expiresAt - now).coerceAtLeast(0)
 
@@ -613,7 +601,10 @@ private fun ActiveCard(session: Session, now: Long, onStop: () -> Unit) {
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
             )
-            Text(session.target.display, style = MaterialTheme.typography.headlineSmall)
+            Text(
+                "${emojiFor(session.target.number, marks)}  ${session.target.display}",
+                style = MaterialTheme.typography.headlineSmall,
+            )
             if (session.target.name != null) {
                 Text(session.target.number, style = MaterialTheme.typography.bodyMedium)
             }
@@ -637,19 +628,26 @@ private fun ActiveCard(session: Session, now: Long, onStop: () -> Unit) {
 @Composable
 private fun ShortcutsCard(
     shortcuts: List<Preset>,
+    marks: Map<String, String>,
     onStart: (Preset) -> Unit,
     onShare: (Preset) -> Unit,
     onDelete: (Preset) -> Unit,
 ) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            shortcuts.forEachIndexed { index, shortcut ->
-                if (index > 0) HorizontalDivider()
+            Label("Quick Actions ⚡️")
+            shortcuts.forEach { shortcut ->
+                val tint = colorForMillis(shortcut.durationMillis)
                 Row(
-                    Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(tint.copy(alpha = 0.14f))
+                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    Text(emojiFor(shortcut.target.number, marks), style = MaterialTheme.typography.titleMedium)
                     Column(Modifier.weight(1f)) {
                         Text(
                             shortcut.target.name?.let { "$it (${shortcut.target.number})" }
@@ -659,21 +657,23 @@ private fun ShortcutsCard(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
-                        Text(
-                            DurationOption.labelFor(shortcut.durationMillis),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        DurationPill(shortcut.durationMillis)
                     }
-                    Button(onClick = { onStart(shortcut) }) { Text("Start") }
+                    Button(
+                        onClick = { onStart(shortcut) },
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                        modifier = Modifier.height(36.dp),
+                    ) { Text("Start", maxLines = 1) }
                     TextButton(
                         onClick = { onShare(shortcut) },
-                        contentPadding = PaddingValues(horizontal = 8.dp),
-                    ) { Text("Share") }
+                        contentPadding = PaddingValues(horizontal = 4.dp),
+                        modifier = Modifier.width(52.dp).height(36.dp),
+                    ) { Text("Share", maxLines = 1, style = MaterialTheme.typography.labelMedium) }
                     TextButton(
                         onClick = { onDelete(shortcut) },
-                        contentPadding = PaddingValues(horizontal = 8.dp),
-                    ) { Text("✕") }
+                        contentPadding = PaddingValues(0.dp),
+                        modifier = Modifier.width(28.dp).height(36.dp),
+                    ) { Text("✕", style = MaterialTheme.typography.labelMedium) }
                 }
             }
         }
@@ -684,6 +684,7 @@ private fun ShortcutsCard(
 @Composable
 private fun StartCard(
     contacts: List<Target>,
+    marks: Map<String, String>,
     selected: Target?,
     duration: DurationOption,
     onPickContact: () -> Unit,
@@ -705,7 +706,7 @@ private fun StartCard(
                     FilterChip(
                         selected = contact.number == selected?.number,
                         onClick = { onSelect(contact) },
-                        label = { Text(contact.display, maxLines = 1) },
+                        label = { Text("${emojiFor(contact.number, marks)}  ${contact.display}", maxLines = 1) },
                     )
                 }
                 AssistChip(
@@ -716,11 +717,7 @@ private fun StartCard(
 
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 DurationOption.entries.forEach { option ->
-                    FilterChip(
-                        selected = option == duration,
-                        onClick = { onDurationChange(option) },
-                        label = { Text(option.label) },
-                    )
+                    DurationChip(option, option == duration) { onDurationChange(option) }
                 }
             }
 
@@ -828,6 +825,38 @@ private fun ApproveDialog(
 }
 
 @Composable
+private fun DurationPill(millis: Long) {
+    val color = colorForMillis(millis)
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(8.dp).background(color, CircleShape))
+        Spacer(Modifier.width(6.dp))
+        Text(
+            DurationOption.labelFor(millis),
+            style = MaterialTheme.typography.labelSmall,
+            color = color,
+            fontWeight = FontWeight.Bold,
+        )
+    }
+}
+
+@Composable
+private fun DurationChip(option: DurationOption, selected: Boolean, onClick: () -> Unit) {
+    val color = colorFor(option)
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = { Text(option.label) },
+        leadingIcon = {
+            if (!selected) Box(Modifier.size(10.dp).background(color, CircleShape))
+        },
+        colors = FilterChipDefaults.filterChipColors(
+            selectedContainerColor = color,
+            selectedLabelColor = Color.White,
+        ),
+    )
+}
+
+@Composable
 private fun Label(text: String) {
     Text(
         text,
@@ -838,10 +867,10 @@ private fun Label(text: String) {
 }
 
 @Composable
-private fun SessionHeader(session: Session, isActive: Boolean) {
+private fun SessionHeader(session: Session, marks: Map<String, String>, isActive: Boolean) {
     Column(Modifier.padding(top = 12.dp)) {
         Text(
-            (if (isActive) "● " else "") + session.target.display,
+            (if (isActive) "● " else "") + emojiFor(session.target.number, marks) + "  " + session.target.display,
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             color = if (isActive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
@@ -908,10 +937,10 @@ private fun BatteryCard(now: Long) {
             Label("Background use")
             Text(
                 if (exempt) {
-                    "Allowed. Long sessions will not be cut short by battery saving."
+                    "Allowed. Sessions will not be cut short by battery saving."
                 } else {
-                    "Android may stop long sessions early to save battery. This only matters for " +
-                        "the 6 hour and 1 day options."
+                    "Android may cut a session short to save battery. This mostly affects the " +
+                        "1 hour option."
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
