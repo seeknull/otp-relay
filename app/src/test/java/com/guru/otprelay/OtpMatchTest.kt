@@ -15,21 +15,36 @@ import org.junit.Test
 class OtpMatchTest {
 
     @Test
-    fun `matches regardless of case`() {
+    fun `matches the word in any case`() {
         assertTrue(OtpMatch.matches("Your OTP is 123456"))
         assertTrue(OtpMatch.matches("your otp is 123456"))
-        assertTrue(OtpMatch.matches("Otp"))
+        assertTrue(OtpMatch.matches("Your Otp is 123456"))
+        assertTrue(OtpMatch.matches("OTP"))
     }
 
     @Test
-    fun `matches when the keyword is inside a longer word`() {
-        // Deliberate: senders write "OTP:", "OTP-", "yourOTP". A word boundary would miss those.
-        assertTrue(OtpMatch.matches("yourOTP:123456"))
+    fun `matches the shapes senders actually use`() {
+        assertTrue(OtpMatch.matches("OTP: 481932"))
+        assertTrue(OtpMatch.matches("OTP-481932 for your card"))
+        assertTrue(OtpMatch.matches("Use (OTP) to continue"))
+        assertTrue(OtpMatch.matches("481932 is your OTP."))
+        assertTrue(OtpMatch.matches("OTP123456 is valid for 10 minutes"))
+        assertTrue(OtpMatch.matches("code\notp 4321"))
+    }
+
+    @Test
+    fun `does not match a word that merely contains the letters`() {
+        // "hotpot" really does contain o-t-p, and a plain substring check forwarded it.
+        assertFalse(OtpMatch.matches("dinner at the hotpot place"))
+        assertFalse(OtpMatch.matches("otpppppp"))
+        assertFalse(OtpMatch.matches("myotp"))
+        assertFalse(OtpMatch.matches("OTPs are secret"))
     }
 
     @Test
     fun `ignores messages without the keyword`() {
         assertFalse(OtpMatch.matches("Your verification code is 123456"))
+        assertFalse(OtpMatch.matches("Your one time password is 123456"))
         assertFalse(OtpMatch.matches(""))
     }
 
@@ -44,6 +59,13 @@ class OtpMatchTest {
     @Test
     fun `finds the keyword when it lands only in a later part`() {
         assertTrue(OtpMatch.matches(OtpMatch.join(listOf("first part text ", "second has OTP 999"))))
+    }
+
+    @Test
+    fun `finds a keyword split across two parts once they are joined`() {
+        // The split falls mid-word, so only the joined text can match.
+        assertFalse(OtpMatch.matches("your OT"))
+        assertTrue(OtpMatch.matches(OtpMatch.join(listOf("your OT", "P is 4321"))))
     }
 
     @Test

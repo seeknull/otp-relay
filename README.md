@@ -7,7 +7,7 @@
 <p align="center">
   <b>Forward OTP texts to one person, for a set time.</b>
   <br>
-  Pick a contact and a duration; any text containing "OTP" is relayed over your own SIM
+  Pick a contact and a duration; any text with the word "OTP" in it is relayed over your own SIM
   until the time is up.
   <br>
   <br>
