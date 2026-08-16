@@ -5,6 +5,10 @@
 <h1 align="center">OTP Relay</h1>
 
 <p align="center">
+  <sub><i>The code always lands on your phone, usually while you are in the middle of something else.</i></sub>
+</p>
+
+<p align="center">
   <b>Forward OTP texts to one person, for a set time.</b>
   <br>
   Pick a contact and a duration; any text with the word "OTP" in it is relayed over your own SIM
