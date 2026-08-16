@@ -8,8 +8,10 @@
   <b>Forward OTP texts to one person, for a set time.</b>
   <br>
   Pick a contact and a duration; any text containing "OTP" is relayed over your own SIM
+  until the time is up.
   <br>
-  until the time is up. No server, no SMS gateway, no network calls.
+  <br>
+  No server, no SMS gateway, no network calls.
 </p>
 
 <p align="center">
@@ -47,10 +49,16 @@ disk, typically in well under 50 ms.
 
 No data is collected or shared. No analytics, no accounts, no cloud backup, no server.
 
-- **SMS is only read while a session is running.** Outside a session the app is not watching.
+The app does not hold the `INTERNET` permission, so it cannot reach the network even in principle —
+that is checkable in the manifest rather than something you have to take on trust.
+
+- **SMS is only read while a session is running.** Outside a session the app is not watching, and
+  nothing read is ever uploaded, since the app makes no network calls at all.
 - The inbox is never read — messages come from the incoming broadcast, so no `READ_SMS`. Anything
   without "OTP" is ignored and never stored.
-- History stays in private storage and is excluded from Android backup. Clear app data, it is gone.
+- Messages that are forwarded are kept in the on-device log, so you can check what went out. That
+  log lives in the app's private storage, is excluded from Android backup, and never leaves the
+  phone. Clear app data and it is gone.
 - Request links carry only a number, after the `#` — which browsers never send to a server, so it
   never reaches GitHub even if the recipient does not have the app. No name is ever put in a link,
   because that would be sender-controlled text sitting next to a phone number.
