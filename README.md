@@ -39,7 +39,9 @@ Do the same, and tap **Save shortcut**. Next time it is one tap.
 Tap **Share**. Send the link on WhatsApp. They keep it.
 When they need a code, they send the link back. You tap it and approve.
 
-It never starts by itself. You always tap. Codes only go to a name in your phone book.
+> [!IMPORTANT]
+> It never starts by itself. You always tap.
+> Codes only go to a name in your phone book.
 
 ## Features
 
