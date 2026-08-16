@@ -33,44 +33,24 @@ to disk, and each log row shows the arrival-to-sent time.
 
 ## Privacy
 
-**No data is collected, and none is shared. The app makes no network calls of any kind** — there
-is no analytics, no crash reporting, no telemetry, no ads, no accounts, no cloud backup. There is
-no server to talk to, and the app contains no HTTP client.
+No data is collected or shared. The app makes no network calls at all — no analytics, no accounts,
+no cloud backup, no server.
 
-**SMS is only read while a session is running.** The receiver that sees incoming messages is
-registered when a session starts and unregistered the moment it ends, so outside an active session
-the app is not watching your messages at all. It also never reads your SMS inbox — messages are
-read from the incoming broadcast itself, which is why `READ_SMS` is not requested. Only messages
-containing "OTP" are acted on; everything else is ignored and never stored.
+- **SMS is only read while a session is running.** The receiver starts with the session and stops
+  with it. Outside a session the app is not watching your messages.
+- The SMS **inbox is never read** — messages come from the incoming broadcast, which is why
+  `READ_SMS` is not requested. Anything without "OTP" is ignored and never stored.
+- Destinations, shortcuts and history stay in the app's private storage and are excluded from
+  Android backup. Clear app data and they are gone.
+- The only thing that leaves the phone is the forwarded text, sent over your carrier to the one
+  number you chose.
 
-Everything the app remembers — destinations, shortcuts, history, your own number — lives in the
-app's private storage on the phone. `android:allowBackup="false"` keeps it out of Android's cloud
-backup, so it is never uploaded anywhere. Clear the app's data and it is gone for good.
+**Request links share nothing either.** The number sits after the `#` in the link, and browsers
+never send that part to the server — so it never reaches GitHub, even if the recipient has no app
+installed. The page it points at is static HTML with no scripts or cookies. A unit test fails if a
+number ever ends up before the `#`.
 
-The only data that ever leaves the phone is the forwarded text message itself, which goes over
-your carrier's normal SMS to the one number you chose.
-
-### The request link is not an exception
-
-Request links are `https://seeknull.github.io/r/#...` and that page is on GitHub Pages, so it is
-fair to ask what GitHub sees. The answer is nothing about the request.
-
-The details are placed after the `#`. That part of a URL is the *fragment*, and browsers by
-specification never transmit it — it is stripped before the request is sent and handled purely on
-the reading device. So even when the link is opened in a browser, the phone number and name are
-not in the request, are not in GitHub's access logs, and are not visible to GitHub or anyone
-operating the site.
-
-When OTP Relay is installed, the browser is not involved at all: Android matches the verified link
-and hands it straight to the app, which reads the fragment locally. There is a unit test
-(`the payload sits in the fragment so it never reaches the host`) that fails if a number or name
-ever ends up before the `#`.
-
-The page itself is static HTML with no scripts, no cookies and no third-party requests. It exists
-only so a recipient without the app sees an explanation rather than a 404.
-
-Do keep in mind the ordinary thing: the link travels through whatever chat app you send it
-through, so that app sees it the same way it sees any message you send.
+The usual caveat applies: whichever chat app you send the link through can see it, like any message.
 
 ## Permissions
 
