@@ -92,17 +92,18 @@ object Store {
         // Close out anything still open, so two sessions can never overlap in the history.
         closeActive(now)
 
-        val session = Session(newId(), target, now, now + durationMillis)
+        // Typing a number that was once picked from Contacts must not lose the name, otherwise
+        // the same person shows a name one time and bare digits the next.
+        val resolved = target.copy(name = target.name?.takeIf { it.isNotBlank() } ?: nameFor(target.number))
+
+        val session = Session(newId(), resolved, now, now + durationMillis)
         _active.value = session
         _sessions.value = (listOf(session) + _sessions.value).take(MAX_SESSIONS)
-        _numbers.value = (listOf(target) + _numbers.value.filterNot { it.number == target.number })
-            .take(MAX_NUMBERS)
 
         store.write(
             mapOf(
                 KEY_ACTIVE to sessionTo(session).toString(),
                 KEY_SESSIONS to writeList(_sessions.value, ::sessionTo),
-                KEY_NUMBERS to writeList(_numbers.value, ::targetTo),
             )
         )
         return session
@@ -128,13 +129,29 @@ object Store {
         return true
     }
 
-    /** False the first time a number is used, so the UI can ask before texting a stranger. */
+    /**
+     * Only numbers picked from the phone book can receive OTPs. Being able to pick a contact
+     * proves it exists on the device, which is why this never needs READ_CONTACTS.
+     */
     fun isKnownNumber(number: String): Boolean =
-        _numbers.value.any { it.number == number }
+        _numbers.value.any { sameNumber(it.number, number) }
+
+    /** Records a contact chosen through the system picker as allowed to receive OTPs. */
+    @Synchronized
+    fun saveContact(target: Target) {
+        _numbers.value = (listOf(target) + _numbers.value.filterNot { sameNumber(it.number, target.number) })
+            .take(MAX_NUMBERS)
+        store.write(mapOf(KEY_NUMBERS to writeList(_numbers.value, ::targetTo)))
+    }
+
+    /** The name last seen for a number, so typing it back in still shows who it is. */
+    fun nameFor(number: String): String? =
+        _numbers.value.firstOrNull { sameNumber(it.number, number) }?.name
+            ?: _shortcuts.value.firstOrNull { sameNumber(it.target.number, number) }?.target?.name
 
     @Synchronized
     fun deleteNumber(target: Target) {
-        _numbers.value = _numbers.value.filterNot { it.number == target.number }
+        _numbers.value = _numbers.value.filterNot { sameNumber(it.number, target.number) }
         store.write(mapOf(KEY_NUMBERS to writeList(_numbers.value, ::targetTo)))
     }
 

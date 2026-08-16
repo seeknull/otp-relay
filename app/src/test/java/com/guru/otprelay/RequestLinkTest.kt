@@ -38,26 +38,31 @@ class RequestLinkTest {
     }
 
     @Test
-    fun `round trips number name and duration`() {
+    fun `round trips number and duration`() {
         val link = RequestLink.build(Target("+911234567890", "Amma"), 30 * 60_000L)
         val parsed = RequestLink.parse(link)!!
 
         assertEquals("+911234567890", parsed.target.number)
-        assertEquals("Amma", parsed.target.name)
         assertEquals(30 * 60_000L, parsed.durationMillis)
     }
 
+    /**
+     * A name in the link would be text the sender controls, shown beside a number: exactly how a
+     * stranger's number would be dressed up as a friend. The name always comes from the phone book.
+     */
     @Test
-    fun `round trips a name containing spaces and symbols`() {
-        val link = RequestLink.build(Target("+911234567890", "Anna & Sis"), 60 * 60_000L)
-        assertEquals("Anna & Sis", RequestLink.parse(link)!!.target.name)
+    fun `never carries a name, even when the target has one`() {
+        val link = RequestLink.build(Target("+911234567890", "Amma"), 30 * 60_000L)
+
+        assertFalse(link.contains("name="), link)
+        assertFalse(link.contains("Amma"), link)
+        assertNull(RequestLink.parse(link)!!.target.name)
     }
 
     @Test
-    fun `omits the name when there is none`() {
-        val link = RequestLink.build(Target("+911234567890", null), 5 * 60_000L)
-        assertEquals(false, link.contains("name="))
-        assertNull(RequestLink.parse(link)!!.target.name)
+    fun `ignores a name someone adds to a link by hand`() {
+        val parsed = RequestLink.parse("otprelay://request?to=%2B911234567890&name=Trustworthy&mins=5")!!
+        assertNull(parsed.target.name)
     }
 
     @Test

@@ -211,10 +211,69 @@ class StoreTest {
     }
 
     @Test
-    fun `recent numbers are deduplicated and newest first`() {
-        Store.startSession(amma, 60_000L, now = 0L)
-        Store.startSession(anna, 60_000L, now = 0L)
-        Store.startSession(amma, 60_000L, now = 0L)
+    fun `typing a bare number keeps the name it was saved with`() {
+        Store.saveContact(amma)
+        // Same digits, no name: what happens when the number is typed rather than picked.
+        val session = Store.startSession(Target(amma.number, null), 60_000L, now = 0L)
+
+        assertEquals("Amma", session.target.name)
+    }
+
+    @Test
+    fun `a name is still remembered after a reload`() {
+        Store.saveContact(amma)
+        Store.load(FakeKeyValueStore(disk.values.toMap()))
+
+        assertEquals("Amma", Store.nameFor(amma.number))
+        assertNull(Store.nameFor("+910000000000"))
+    }
+
+    @Test
+    fun `only a contact chosen from the phone book may receive OTPs`() {
+        assertFalse(Store.isKnownNumber(amma.number))
+
+        Store.saveContact(amma)
+        assertTrue(Store.isKnownNumber(amma.number))
+    }
+
+    @Test
+    fun `starting a session never quietly authorises a number`() {
+        Store.startSession(Target("+915555555555", null), 60_000L, now = 0L)
+
+        assertFalse(Store.isKnownNumber("+915555555555"))
+        assertTrue(Store.numbers.value.isEmpty())
+    }
+
+    @Test
+    fun `a saved contact is recognised however the number is written`() {
+        Store.saveContact(Target("+91 98765 43210", "Anna"))
+
+        assertTrue(Store.isKnownNumber("9876543210"))
+        assertTrue(Store.isKnownNumber("+919876543210"))
+        assertTrue(Store.isKnownNumber("098765-43210"))
+        assertFalse(Store.isKnownNumber("+919876543211"))
+    }
+
+    @Test
+    fun `a removed contact is no longer allowed`() {
+        Store.saveContact(amma)
+        Store.deleteNumber(amma)
+
+        assertFalse(Store.isKnownNumber(amma.number))
+    }
+
+    @Test
+    fun `a shortcut can supply the name for a typed number`() {
+        Store.saveShortcut(amma, 60_000L)
+
+        assertEquals("Amma", Store.nameFor(amma.number))
+    }
+
+    @Test
+    fun `saved contacts are deduplicated and newest first`() {
+        Store.saveContact(amma)
+        Store.saveContact(anna)
+        Store.saveContact(amma)
 
         assertEquals(listOf(amma.number, anna.number), Store.numbers.value.map { it.number })
     }

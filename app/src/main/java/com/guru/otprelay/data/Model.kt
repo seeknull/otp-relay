@@ -23,6 +23,18 @@ data class Target(val number: String, val name: String? = null) {
     val display: String get() = name?.takeIf { it.isNotBlank() } ?: number
 }
 
+/**
+ * The same person may be written +91 98765 43210, 09876543210 or 9876543210. Comparing the last
+ * ten digits treats those as one number, which matters because a saved contact has to be
+ * recognised no matter how it was typed.
+ */
+fun normalizeNumber(raw: String): String = raw.filter(Char::isDigit).takeLast(10)
+
+fun sameNumber(a: String, b: String): Boolean {
+    val left = normalizeNumber(a)
+    return left.length >= 6 && left == normalizeNumber(b)
+}
+
 data class Session(
     val id: Long,
     val target: Target,

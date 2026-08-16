@@ -41,11 +41,10 @@ object RequestLink {
     fun buildScheme(target: Target, durationMillis: Long): String =
         "$PREFIX?" + payload(target, durationMillis)
 
-    private fun payload(target: Target, durationMillis: Long): String = buildString {
-        append("to=").append(encode(target.number))
-        target.name?.takeIf { it.isNotBlank() }?.let { append("&name=").append(encode(it)) }
-        append("&mins=").append(durationMillis / 60_000)
-    }
+    // Only the number travels. A name in the link would be attacker-controlled text shown next
+    // to a number, which is exactly how someone would dress up a stranger's number as a friend.
+    private fun payload(target: Target, durationMillis: Long): String =
+        "to=" + encode(target.number) + "&mins=" + (durationMillis / 60_000)
 
     /** Accepts either form, bare or embedded in text, so a pasted chat message works. */
     fun parse(text: String?): Preset? {
@@ -72,10 +71,7 @@ object RequestLink {
         val minutes = (params["mins"]?.toLongOrNull() ?: DEFAULT_MINUTES)
             .coerceIn(MIN_MINUTES, MAX_MINUTES)
 
-        return Preset(
-            target = Target(number, params["name"]?.takeIf { it.isNotBlank() }),
-            durationMillis = minutes * 60_000L,
-        )
+        return Preset(Target(number), minutes * 60_000L)
     }
 
     const val MIN_DIGITS = 6

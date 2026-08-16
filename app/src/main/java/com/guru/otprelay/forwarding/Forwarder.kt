@@ -46,6 +46,7 @@ object Forwarder {
     fun forward(context: Context, session: Session, arrivedAt: Long, from: String, body: String) {
         val logId = Store.newId()
         val error = send(context, session.target.number, "$body\n$FINGERPRINT", logId)
+        Chime.play()
         log(logId, session, arrivedAt, from, body, error)
     }
 
