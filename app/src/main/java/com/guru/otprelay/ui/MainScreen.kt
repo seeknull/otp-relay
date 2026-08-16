@@ -76,6 +76,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import com.guru.otprelay.BuildConfig
 import com.guru.otprelay.R
 import com.guru.otprelay.data.DurationOption
 import com.guru.otprelay.data.ForwardStatus
@@ -390,11 +391,20 @@ private fun TopBar(screen: Screen, onOpen: (Screen) -> Unit, onBack: () -> Unit)
             )
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(
-                    "OTP Relay",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                )
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        "OTP Relay",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        "v${BuildConfig.VERSION_NAME}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 4.dp),
+                    )
+                }
                 Text(
                     "Texts containing “OTP” go on to one person, for a set time.",
                     style = MaterialTheme.typography.bodySmall,
