@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/seeknull/otp-relay/releases/latest"><b>Download APK — v1.4</b></a>
+  <a href="https://github.com/seeknull/otp-relay/releases/latest"><b>Download APK — v1.5</b></a>
   &nbsp;·&nbsp; Android 8.0+ &nbsp;·&nbsp; MIT
 </p>
 
@@ -40,8 +40,9 @@ optional:
 
 > Settings → Apps → OTP Relay → **⋮** (top corner) → **Allow restricted settings**
 
-Then open the app and start a session; it will ask for SMS as normal. The app shows these steps
-itself if it detects the block. Installing with `adb install` instead avoids the restriction
+Then open the app and press start. It checks everything a session needs — SMS access, the
+restriction above, notifications, a working SIM, battery limits — and explains anything missing with
+a button that opens the right settings screen. Installing with `adb install` avoids the restriction
 altogether.
 
 ## How to use

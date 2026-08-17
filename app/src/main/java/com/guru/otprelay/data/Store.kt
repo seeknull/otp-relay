@@ -23,6 +23,7 @@ object Store {
     private const val KEY_SHORTCUTS = "shortcuts"
     private const val KEY_NUMBERS = "numbers"
     private const val KEY_MY_NUMBER = "my_number"
+    private const val KEY_ASKED = "asked_permissions"
 
     private const val MAX_SESSIONS = 25
     private const val MAX_LOGS = 300
@@ -47,6 +48,14 @@ object Store {
     private val _numbers = MutableStateFlow<List<Target>>(emptyList())
     val numbers: StateFlow<List<Target>> = _numbers.asStateFlow()
 
+    /**
+     * True once the system permission prompt has been shown at least once. Android reports
+     * "no rationale needed" both before the first ask and after a permanent denial, so without
+     * this the app cannot tell a fresh install from a dead end.
+     */
+    private val _asked = MutableStateFlow(false)
+    val asked: StateFlow<Boolean> = _asked.asStateFlow()
+
     /** Shown to the recipient in the start and stop notices. */
     private val _myNumber = MutableStateFlow("")
     val myNumber: StateFlow<String> = _myNumber.asStateFlow()
@@ -64,6 +73,7 @@ object Store {
         _shortcuts.value = readList(KEY_SHORTCUTS, ::presetFrom)
         _numbers.value = readList(KEY_NUMBERS, ::targetFrom)
         _myNumber.value = store.read(KEY_MY_NUMBER).orEmpty()
+        _asked.value = store.read(KEY_ASKED) == "true"
         _active.value = store.read(KEY_ACTIVE)
             ?.let { sessionFrom(JSONObject(it)) }
             ?.takeIf { it.isActive() }
@@ -80,6 +90,13 @@ object Store {
     fun newId(): Long = nextId.getAndIncrement()
 
     fun currentSession(): Session? = _active.value?.takeIf { it.isActive() }
+
+    @Synchronized
+    fun markPermissionsAsked() {
+        if (_asked.value) return
+        _asked.value = true
+        store.write(mapOf(KEY_ASKED to "true"))
+    }
 
     @Synchronized
     fun setMyNumber(value: String) {

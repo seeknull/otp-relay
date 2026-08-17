@@ -114,6 +114,7 @@ fun MainScreen(request: Preset?, onRequestHandled: () -> Unit) {
     val shortcuts by Store.shortcuts.collectAsState()
     val numbers by Store.numbers.collectAsState()
     val myNumber by Store.myNumber.collectAsState()
+    val asked by Store.asked.collectAsState()
 
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) {
@@ -135,22 +136,19 @@ fun MainScreen(request: Preset?, onRequestHandled: () -> Unit) {
     var unknown by remember { mutableStateOf<Preset?>(null) }
     var unmatched by remember { mutableStateOf<Preset?>(null) }
     var verifying by remember { mutableStateOf<Preset?>(null) }
-    var blocked by remember { mutableStateOf(false) }
+    var problems by remember { mutableStateOf<List<Problem>>(emptyList()) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { granted ->
+        Store.markPermissionsAsked()
         val block = pending
-        pending = null
-        when {
-            granted.values.all { it } -> block?.invoke()
-            // Android hides SMS behind "restricted settings" for apps installed outside a store,
-            // and the system dialog then closes without ever showing a prompt. Saying "required"
-            // is useless here, because the switch in Settings is greyed out too.
-            granted.keys.any { !shouldAskAgain(context, it) } -> blocked = true
-            else -> Toast.makeText(
-                context, "SMS and notification access are required", Toast.LENGTH_LONG
-            ).show()
+        if (granted.values.all { it }) {
+            pending = null
+            block?.invoke()
+        } else {
+            // Re-run the checks so the reason is named, rather than repeating a bare refusal.
+            problems = preflight(context, asked = true)
         }
     }
 
@@ -185,25 +183,27 @@ fun MainScreen(request: Preset?, onRequestHandled: () -> Unit) {
             }
     }
 
+    fun beginSession(target: Target, millis: Long) {
+        val session = Store.startSession(target, millis)
+        ForwardingService.start(context)
+        Forwarder.notifyStarted(context, session, formatClock(session.expiresAt))
+    }
+
     fun startConfirmed(target: Target, millis: Long) {
         if (Store.currentSession() != null) {
             Toast.makeText(context, "Stop the current session first", Toast.LENGTH_SHORT).show()
             return
         }
-        val block = {
-            val session = Store.startSession(target, millis)
-            ForwardingService.start(context)
-            Forwarder.notifyStarted(context, session, formatClock(session.expiresAt))
+        // Everything that could stop a session working is checked here, in one place, so the
+        // app can say what is wrong instead of failing later.
+        val found = preflight(context, asked)
+        if (found.any { it.blocking }) {
+            pending = { beginSession(target, millis) }
+            problems = found
+            return
         }
-        val missing = requiredPermissions().filter {
-            ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
-        }
-        if (missing.isEmpty()) {
-            block()
-        } else {
-            pending = block
-            permissionLauncher.launch(missing.toTypedArray())
-        }
+        pending = null
+        beginSession(target, millis)
     }
 
     /** A number that has never been used gets one confirmation before it is texted. */
@@ -320,40 +320,65 @@ fun MainScreen(request: Preset?, onRequestHandled: () -> Unit) {
         )
     }
 
-    if (blocked) {
+    if (problems.isNotEmpty()) {
+        val blocking = problems.filter { it.blocking }
         AlertDialog(
-            onDismissRequest = { blocked = false },
-            title = { Text("Android is blocking SMS access") },
+            onDismissRequest = { problems = emptyList() },
+            title = { Text(if (blocking.isEmpty()) "Before you start" else "Cannot start yet") },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(
-                        "Apps installed from outside an app store cannot be given SMS access " +
-                            "until you lift the restriction. The switch in Settings stays greyed " +
-                            "out until then.",
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    Text(
-                        "1.  Open app info below\n" +
-                            "2.  Tap ⋮ in the top corner\n" +
-                            "3.  Tap “Allow restricted settings”\n" +
-                            "4.  Come back and start a session",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontFamily = FontFamily.Monospace,
-                    )
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    problems.forEach { problem ->
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                (if (problem.blocking) "" else "Optional — ") + problem.title,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = if (problem.blocking) MaterialTheme.colorScheme.error
+                                else MaterialTheme.colorScheme.onSurface,
+                            )
+                            Text(problem.detail, style = MaterialTheme.typography.bodySmall)
+                            TextButton(
+                                onClick = {
+                                    problems = emptyList()
+                                    when (problem.fix) {
+                                        Fix.REQUEST_PERMISSIONS ->
+                                            permissionLauncher.launch(requiredPermissions())
+                                        Fix.APP_INFO -> context.startActivity(
+                                            Intent(
+                                                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                                Uri.fromParts("package", context.packageName, null),
+                                            )
+                                        )
+                                        Fix.NOTIFICATION_SETTINGS -> context.startActivity(
+                                            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                                .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                                        )
+                                        Fix.BATTERY -> context.startActivity(
+                                            Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                                        )
+                                    }
+                                },
+                                contentPadding = PaddingValues(0.dp),
+                            ) { Text(problem.fixLabel) }
+                        }
+                    }
                 }
             },
             confirmButton = {
-                TextButton(onClick = {
-                    blocked = false
-                    context.startActivity(
-                        Intent(
-                            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                            Uri.fromParts("package", context.packageName, null),
-                        )
-                    )
-                }) { Text("Open app info") }
+                if (blocking.isEmpty()) {
+                    TextButton(onClick = {
+                        val block = pending
+                        pending = null
+                        problems = emptyList()
+                        block?.invoke()
+                    }) { Text("Start anyway") }
+                } else {
+                    TextButton(onClick = { problems = emptyList(); pending = null }) { Text("Close") }
+                }
             },
-            dismissButton = { TextButton(onClick = { blocked = false }) { Text("Later") } },
+            dismissButton = if (blocking.isEmpty()) {
+                { TextButton(onClick = { problems = emptyList(); pending = null }) { Text("Cancel") } }
+            } else null,
         )
     }
 
@@ -1006,15 +1031,4 @@ private fun BatteryCard(now: Long) {
             }
         }
     }
-}
-
-/**
- * False once the system will no longer show a prompt for a permission, either because it was
- * denied twice or because Android is holding it behind restricted settings. Both leave the user
- * stuck with no dialog, so the app has to explain the way out itself.
- */
-private fun shouldAskAgain(context: android.content.Context, permission: String): Boolean {
-    val activity = context as? android.app.Activity ?: return true
-    return ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED ||
-        androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)
 }
