@@ -14,8 +14,8 @@ android {
         applicationId = "com.guru.otprelay"
         minSdk = 26
         targetSdk = 36
-        versionCode = 8
-        versionName = "1.7"
+        versionCode = 9
+        versionName = "1.8"
     }
 
     // App Links verification pins the signing certificate, so release builds must be signed with
@@ -70,9 +70,12 @@ kotlin {
 dependencies {
     implementation("androidx.core:core-ktx:1.18.0")
     implementation("androidx.activity:activity-compose:1.12.4")
-    // Unlock confirmation before a number is allowed to receive codes. Brings in fragment,
-    // which is why MainActivity is a FragmentActivity.
+    // Unlock confirmation before a number is allowed to receive codes. Needs a FragmentActivity,
+    // and biometric 1.1.0 still resolves fragment 1.2.5, whose startActivityForResult rejects the
+    // large request codes the Activity Result API generates. Forcing a current fragment keeps the
+    // contact picker working.
     implementation("androidx.biometric:biometric:1.1.0")
+    implementation("androidx.fragment:fragment-ktx:1.8.9")
     implementation(platform("androidx.compose:compose-bom:2026.06.01"))
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.ui:ui")

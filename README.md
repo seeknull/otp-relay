@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/seeknull/otp-relay/releases/latest"><b>Download APK — v1.7</b></a>
+  <a href="https://github.com/seeknull/otp-relay/releases/latest"><b>Download APK — v1.8</b></a>
   &nbsp;·&nbsp; Android 8.0+ &nbsp;·&nbsp; MIT
 </p>
 
@@ -61,9 +61,15 @@ the category. You get one of two dialogs:
 
 Past a hard block, best first:
 
-- **`adb install otp-relay-*.apk`** — adb is not an internet source, so the block does not apply.
 - **Pause scanning** — Play Store → profile → Play Protect → **⚙**. Re-enable it after. It can
-  remove the app once scanning resumes, so prefer adb.
+  remove the app once scanning resumes.
+- **adb**, which verifies installs separately and by default. Turn that off for the one command:
+
+  ```
+  adb shell settings put global verifier_verify_adb_installs 0
+  adb install otp-relay-*.apk
+  adb shell settings put global verifier_verify_adb_installs 1
+  ```
 - **[Shizuku](https://shizuku.rikka.app/) with InstallerX** — no computer needed, and it sticks.
 
 **Then lift the SMS restriction**, or the permission stays greyed out and no prompt appears:
