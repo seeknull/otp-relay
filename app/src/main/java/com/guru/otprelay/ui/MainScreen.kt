@@ -289,9 +289,9 @@ fun MainScreen(request: Preset?, onRequestHandled: () -> Unit) {
                     // standing one-tap route to forwarding. Starting from one is not gated:
                     // the check belongs where lasting permission is created, not where it is used.
                     onSave = { t, m ->
-                        confirmIdentity(context, "Save a one-tap shortcut for ${t.display}") {
+                        confirmIdentity(context, "Save a quick action for ${t.display}") {
                             Store.saveShortcut(t, m)
-                            Toast.makeText(context, "Shortcut saved", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Quick action saved", Toast.LENGTH_SHORT).show()
                         }
                     },
                     onShare = ::shareLink,
@@ -832,7 +832,7 @@ private fun StartCard(
                     OutlinedButton(
                         onClick = { onSave(selected, duration.millis) },
                         modifier = Modifier.weight(1f),
-                    ) { Text("Save shortcut", maxLines = 1) }
+                    ) { Text("Save quick action", maxLines = 1) }
                     OutlinedButton(
                         onClick = { onShare(selected, duration.millis) },
                         modifier = Modifier.weight(1f),

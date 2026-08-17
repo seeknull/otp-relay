@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/seeknull/otp-relay/releases/latest"><b>Download APK — v1.8</b></a>
+  <a href="https://github.com/seeknull/otp-relay/releases/latest"><b>Download APK — v1.9</b></a>
   &nbsp;·&nbsp; Android 8.0+ &nbsp;·&nbsp; MIT
 </p>
 
@@ -37,7 +37,7 @@ Three ways to start. Each one stops by itself when the time is up.
 Tap **+ Contact**. Pick a name. Pick a time. Tap **Start**.
 
 **⚡ 2. Save a quick action**  
-Do the same, and tap **Save shortcut**. Next time it is one tap.
+Do the same, and tap **Save quick action**. Next time it is one tap.
 
 **🔗 3. Send a link**  
 Tap **Share**. Send the link on WhatsApp. They keep it.
@@ -84,7 +84,7 @@ SIM, battery limits — and explains anything missing with a button to the right
 - Sessions of 5, 15, 30 or 60 minutes.
 - **Only saved contacts can receive OTPs.** The number must be chosen from your phone book, so a
   link from a stranger cannot point forwarding somewhere unknown.
-- **Adding a contact or saving a shortcut needs your fingerprint**, or whatever unlock the phone
+- **Adding a contact or saving a quick action needs your fingerprint**, or whatever unlock the phone
   uses. Starting a session does not — the check guards what grants access, not what uses it.
 - **No notification, no forwarding.** A session will not start without a visible notification, and
   stops itself within 5 seconds if that notification is ever blocked or removed.
@@ -188,7 +188,7 @@ Protect — see [Install](#install).
   tied to the host *and* the signing key, so forks need their own: point `WEB_HOST` in
   `RequestLink.kt` and the manifest at a host you control, and serve your certificate fingerprint
   from `/.well-known/assetlinks.json` there.
-- Some phones stop background apps aggressively, cutting a session short. Settings has a shortcut to
+- Some phones stop background apps aggressively, cutting a session short. Settings has a link to
   Android's battery screen.
 
 ## Licence
