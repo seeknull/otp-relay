@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/seeknull/otp-relay/releases/latest"><b>Download APK — v1.3</b></a>
+  <a href="https://github.com/seeknull/otp-relay/releases/latest"><b>Download APK — v1.4</b></a>
   &nbsp;·&nbsp; Android 8.0+ &nbsp;·&nbsp; MIT
 </p>
 
@@ -28,6 +28,21 @@
   &nbsp;
   <img src="docs/screenshot-history.png" width="46%" align="top" alt="History grouped by session">
 </p>
+
+## Install
+
+Download the APK from [Releases](https://github.com/seeknull/otp-relay/releases/latest) and open it.
+Android asks you to allow installing from this source — that is the normal sideload prompt.
+
+**Then lift the SMS restriction.** Android does not let an app installed from outside an app store
+hold SMS permission. The switch stays greyed out and no prompt ever appears, so this step is not
+optional:
+
+> Settings → Apps → OTP Relay → **⋮** (top corner) → **Allow restricted settings**
+
+Then open the app and start a session; it will ask for SMS as normal. The app shows these steps
+itself if it detects the block. Installing with `adb install` instead avoids the restriction
+altogether.
 
 ## How to use
 

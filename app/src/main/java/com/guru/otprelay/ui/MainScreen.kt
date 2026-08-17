@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.ClipboardManager
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.ContactsContract.CommonDataKinds.Phone
@@ -134,16 +135,22 @@ fun MainScreen(request: Preset?, onRequestHandled: () -> Unit) {
     var unknown by remember { mutableStateOf<Preset?>(null) }
     var unmatched by remember { mutableStateOf<Preset?>(null) }
     var verifying by remember { mutableStateOf<Preset?>(null) }
+    var blocked by remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { granted ->
         val block = pending
         pending = null
-        if (granted.values.all { it }) {
-            block?.invoke()
-        } else {
-            Toast.makeText(context, "SMS and notification access are required", Toast.LENGTH_LONG).show()
+        when {
+            granted.values.all { it } -> block?.invoke()
+            // Android hides SMS behind "restricted settings" for apps installed outside a store,
+            // and the system dialog then closes without ever showing a prompt. Saying "required"
+            // is useless here, because the switch in Settings is greyed out too.
+            granted.keys.any { !shouldAskAgain(context, it) } -> blocked = true
+            else -> Toast.makeText(
+                context, "SMS and notification access are required", Toast.LENGTH_LONG
+            ).show()
         }
     }
 
@@ -310,6 +317,43 @@ fun MainScreen(request: Preset?, onRequestHandled: () -> Unit) {
                 onRequestHandled()
                 startSession(target, millis)
             },
+        )
+    }
+
+    if (blocked) {
+        AlertDialog(
+            onDismissRequest = { blocked = false },
+            title = { Text("Android is blocking SMS access") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        "Apps installed from outside an app store cannot be given SMS access " +
+                            "until you lift the restriction. The switch in Settings stays greyed " +
+                            "out until then.",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Text(
+                        "1.  Open app info below\n" +
+                            "2.  Tap ⋮ in the top corner\n" +
+                            "3.  Tap “Allow restricted settings”\n" +
+                            "4.  Come back and start a session",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontFamily = FontFamily.Monospace,
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    blocked = false
+                    context.startActivity(
+                        Intent(
+                            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                            Uri.fromParts("package", context.packageName, null),
+                        )
+                    )
+                }) { Text("Open app info") }
+            },
+            dismissButton = { TextButton(onClick = { blocked = false }) { Text("Later") } },
         )
     }
 
@@ -962,4 +1006,15 @@ private fun BatteryCard(now: Long) {
             }
         }
     }
+}
+
+/**
+ * False once the system will no longer show a prompt for a permission, either because it was
+ * denied twice or because Android is holding it behind restricted settings. Both leave the user
+ * stuck with no dialog, so the app has to explain the way out itself.
+ */
+private fun shouldAskAgain(context: android.content.Context, permission: String): Boolean {
+    val activity = context as? android.app.Activity ?: return true
+    return ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED ||
+        androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)
 }
