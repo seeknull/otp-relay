@@ -35,27 +35,36 @@ Download the APK from [Releases](https://github.com/seeknull/otp-relay/releases/
 
 ### If Play Protect blocks it
 
-> App blocked to protect your device
+Play Protect stops apps that declare `RECEIVE_SMS`, which this app needs in order to read the code
+at all. It shows up in two different forms, which is why it sometimes blocks and sometimes does not:
 
-In India, Singapore, Thailand and Brazil, Play Protect blocks sideloaded apps that declare
-`RECEIVE_SMS`, which this app needs to read the code in the first place. It triggers when you
-install from a browser, a messaging app or a file manager.
+| What you see | What it is |
+| --- | --- |
+| **More details → Install anyway** | The ordinary warning. Tap through and it installs. |
+| Only an **OK** button | A hard block. Nothing gets past it while Play Protect is scanning. |
+
+The hard block is a pilot running in **India, Singapore, Thailand and Brazil**. It triggers on
+installs from what Google calls internet-sideloading sources: browsers, messaging apps and file
+managers. The same APK often installs fine on a phone outside those countries, which is the other
+reason results differ.
 
 The check exists because apps that quietly intercept one-time passcodes are a real and common fraud.
-It is aimed squarely at this shape of app, and this one is that shape — the difference is that this
-one only forwards while you have started a session, and only to a contact you picked. Play Protect
-cannot tell those apart, so it stops everything in the category.
+It is aimed at exactly this shape of app. What separates this one — sessions you start yourself,
+contacts only, an unmissable notification, no network permission at all — is not something Play
+Protect can see. It reads the declared permission and stops the whole category.
 
-Two ways round it:
-
-**Install over adb**, which is not an internet source, so the check does not apply:
+**Install over adb.** Not an internet source, so the pilot does not apply:
 
 ```
 adb install otp-relay-1.5.apk
 ```
 
-**Or turn the scan off for a minute:** Play Store → your profile picture → Play Protect → **⚙** →
-turn off *Scan apps with Play Protect*, install, then turn it back on.
+**Or pause the scan.** Play Store → profile picture → Play Protect → **⚙** → turn off app scanning,
+install, then turn it back on. Worth knowing: when scanning resumes it may remove the app on its
+own, so prefer adb if you have it.
+
+**Or use [Shizuku](https://shizuku.rikka.app/) with an installer such as InstallerX**, which installs
+without going through Play Protect. More setup, but it sticks, and it does not need a computer.
 
 ### Then lift the SMS restriction
 
