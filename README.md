@@ -32,18 +32,41 @@
 ## Install
 
 Download the APK from [Releases](https://github.com/seeknull/otp-relay/releases/latest) and open it.
-Android asks you to allow installing from this source — that is the normal sideload prompt.
 
-**Then lift the SMS restriction.** Android does not let an app installed from outside an app store
-hold SMS permission. The switch stays greyed out and no prompt ever appears, so this step is not
-optional:
+### If Play Protect blocks it
+
+> App blocked to protect your device
+
+In India, Singapore, Thailand and Brazil, Play Protect blocks sideloaded apps that declare
+`RECEIVE_SMS`, which this app needs to read the code in the first place. It triggers when you
+install from a browser, a messaging app or a file manager.
+
+The check exists because apps that quietly intercept one-time passcodes are a real and common fraud.
+It is aimed squarely at this shape of app, and this one is that shape — the difference is that this
+one only forwards while you have started a session, and only to a contact you picked. Play Protect
+cannot tell those apart, so it stops everything in the category.
+
+Two ways round it:
+
+**Install over adb**, which is not an internet source, so the check does not apply:
+
+```
+adb install otp-relay-1.5.apk
+```
+
+**Or turn the scan off for a minute:** Play Store → your profile picture → Play Protect → **⚙** →
+turn off *Scan apps with Play Protect*, install, then turn it back on.
+
+### Then lift the SMS restriction
+
+Separately, Android does not let an app installed from outside an app store hold SMS access. No
+prompt appears and the switch stays greyed out until you allow it:
 
 > Settings → Apps → OTP Relay → **⋮** (top corner) → **Allow restricted settings**
 
 Then open the app and press start. It checks everything a session needs — SMS access, the
 restriction above, notifications, a working SIM, battery limits — and explains anything missing with
-a button that opens the right settings screen. Installing with `adb install` avoids the restriction
-altogether.
+a button that opens the right settings screen.
 
 ## How to use
 
@@ -158,7 +181,9 @@ handlers. The one [exception](https://support.google.com/googleplay/android-deve
 that might fit — device automation — is meant for general automation apps, needs a declaration form
 and review, and auto-relaying passcodes resembles the fraud pattern reviewers screen for.
 
-The core function is the problem, not the code. Sideloading has none of these limits.
+The core function is the problem, not the code. Sideloading avoids the review, but not every limit:
+Play Protect blocks sideloaded SMS apps outright in several countries, as described under
+[Install](#install).
 
 ## Notes
 
