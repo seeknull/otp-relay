@@ -29,54 +29,6 @@
   <img src="docs/screenshot-history.png" width="46%" align="top" alt="History grouped by session">
 </p>
 
-## Install
-
-Download the APK from [Releases](https://github.com/seeknull/otp-relay/releases/latest) and open it.
-
-### If Play Protect blocks it
-
-Play Protect stops apps that declare `RECEIVE_SMS`, which this app needs in order to read the code
-at all. It shows up in two different forms, which is why it sometimes blocks and sometimes does not:
-
-| What you see | What it is |
-| --- | --- |
-| **More details → Install anyway** | The ordinary warning. Tap through and it installs. |
-| Only an **OK** button | A hard block. Nothing gets past it while Play Protect is scanning. |
-
-The hard block is a pilot running in **India, Singapore, Thailand and Brazil**. It triggers on
-installs from what Google calls internet-sideloading sources: browsers, messaging apps and file
-managers. The same APK often installs fine on a phone outside those countries, which is the other
-reason results differ.
-
-The check exists because apps that quietly intercept one-time passcodes are a real and common fraud.
-It is aimed at exactly this shape of app. What separates this one — sessions you start yourself,
-contacts only, an unmissable notification, no network permission at all — is not something Play
-Protect can see. It reads the declared permission and stops the whole category.
-
-**Install over adb.** Not an internet source, so the pilot does not apply:
-
-```
-adb install otp-relay-1.5.apk
-```
-
-**Or pause the scan.** Play Store → profile picture → Play Protect → **⚙** → turn off app scanning,
-install, then turn it back on. Worth knowing: when scanning resumes it may remove the app on its
-own, so prefer adb if you have it.
-
-**Or use [Shizuku](https://shizuku.rikka.app/) with an installer such as InstallerX**, which installs
-without going through Play Protect. More setup, but it sticks, and it does not need a computer.
-
-### Then lift the SMS restriction
-
-Separately, Android does not let an app installed from outside an app store hold SMS access. No
-prompt appears and the switch stays greyed out until you allow it:
-
-> Settings → Apps → OTP Relay → **⋮** (top corner) → **Allow restricted settings**
-
-Then open the app and press start. It checks everything a session needs — SMS access, the
-restriction above, notifications, a working SIM, battery limits — and explains anything missing with
-a button that opens the right settings screen.
-
 ## How to use
 
 Three ways to start. Each one stops by itself when the time is up.
@@ -93,43 +45,67 @@ When they need a code, they send the link back. You tap it and approve.
 
 It never starts by itself. You always tap. Codes only go to a name in your phone book.
 
+## Install
+
+Download the APK from [Releases](https://github.com/seeknull/otp-relay/releases/latest) and open it.
+Two things get in the way, both of them Android's, not the app's.
+
+**Play Protect may stop the install**, because the app declares `RECEIVE_SMS` — which it needs to
+read the code at all. This is the check meant to catch apps that quietly intercept passcodes, and it
+cannot see what makes this one different, so it stops the whole category. You get one of two
+dialogs:
+
+| What you see | What it means |
+| --- | --- |
+| **More details → Install anyway** | The ordinary warning. Tap through. |
+| Only an **OK** button | A hard block, piloted in India, Singapore, Thailand and Brazil. |
+
+Past a hard block, best first:
+
+- **`adb install otp-relay-*.apk`** — adb is not an internet source, so the block does not apply.
+- **Pause scanning** — Play Store → profile → Play Protect → **⚙**. Re-enable it after. It can
+  remove the app once scanning resumes, so prefer adb.
+- **[Shizuku](https://shizuku.rikka.app/) with InstallerX** — no computer needed, and it sticks.
+
+**Then lift the SMS restriction**, or the permission stays greyed out with no prompt ever shown:
+
+> Settings → Apps → OTP Relay → **⋮** → **Allow restricted settings**
+
+Now press start in the app. It checks everything a session needs — SMS access, notifications, a
+working SIM, battery limits — and explains anything missing with a button to the right screen.
+
 ## Features
 
-- Sessions of 5, 15 or 30 minutes, or 1 hour.
-- **Only saved contacts can receive OTPs.** A number has to be chosen from your phone book first,
-  so a link from a stranger cannot point forwarding at an unknown number.
+- Sessions of 5, 15, 30 or 60 minutes.
+- **Only saved contacts can receive OTPs.** The number must be chosen from your phone book, so a
+  link from a stranger cannot point forwarding somewhere unknown.
 - **No notification, no forwarding.** A session will not start without a visible notification, and
   stops itself within 5 seconds if that notification is ever blocked or removed.
 - Quick actions — save a person and a duration, start with one tap.
 - A short beep when a message is relayed, so you know without looking.
 - The recipient is texted when a session starts and when it ends.
 - Every message sent is logged, grouped by session, with how long it took to go out.
-- **Request links** — send someone a link; they send it back when they need an OTP. It opens the
-  approval prompt with the details filled in. Nothing starts until you approve, and the number
-  still has to be one of your contacts.
+- **Request links** — send someone a link; they send it back when they need an OTP, and it opens
+  the approval prompt filled in. Nothing starts until you approve.
 
-A forwarded text names who the code came from and is marked `(fwd by OTP Relay)`.
-
-Sending is quick, because OTPs expire: the message reaches the modem before anything is written to
-disk, typically in well under 50 ms.
+Forwarded texts name who the code came from and are marked `(fwd by OTP Relay)`. Sending is quick,
+because OTPs expire: the message reaches the modem before anything touches disk, usually well under
+50 ms.
 
 ## Privacy
 
 No data is collected or shared. No analytics, no accounts, no cloud backup, no server.
 
-The app does not hold the `INTERNET` permission, so it cannot reach the network even in principle —
-that is checkable in the manifest rather than something you have to take on trust.
-
-- **SMS is only read while a session is running.** Outside a session the app is not watching, and
-  nothing read is ever uploaded, since the app makes no network calls at all.
+- **Nothing can be uploaded.** The app does not hold the `INTERNET` permission, so it cannot reach
+  the network even in principle. That is checkable in the manifest rather than taken on trust.
+- **SMS is only read while a session is running.** Outside a session the app is not watching.
 - The inbox is never read — messages come from the incoming broadcast, so no `READ_SMS`. Anything
   without "OTP" is ignored and never stored.
-- Messages that are forwarded are kept in the on-device log, so you can check what went out. That
-  log lives in the app's private storage, is excluded from Android backup, and never leaves the
-  phone. Clear app data and it is gone.
-- Request links carry only a number, after the `#` — which browsers never send to a server, so it
-  never reaches GitHub even if the recipient does not have the app. No name is ever put in a link,
-  because that would be sender-controlled text sitting next to a phone number.
+- Forwarded messages are kept in the on-device log so you can check what went out. It sits in
+  private storage, is excluded from Android backup, and never leaves the phone.
+- Request links carry only a number, after the `#`, which browsers never send to a server — so it
+  never reaches GitHub even if the recipient does not have the app. A link never carries a name,
+  because that would be sender-controlled text sitting beside a phone number.
 
 The usual caveat: whichever chat app you send a link through can see it, like any message.
 
@@ -171,13 +147,12 @@ keytool -genkeypair -v -keystore ~/otp-relay.keystore -alias otprelay \
   -Potprelay.storePassword=... -Potprelay.keyAlias=otprelay -Potprelay.keyPassword=...
 ```
 
-Keep that keystore. Debug builds are signed with it too when it is present, so a downloaded release
-APK installs straight over one you built yourself — Android blocks an update whenever the signing
-certificate changes. Without the keystore, debug falls back to the standard debug key and release is
-left unsigned.
+Keep that keystore. Debug builds use it too when present, so a downloaded release installs straight
+over one you built — Android blocks updates whenever the signing certificate changes. Without it,
+debug falls back to the standard debug key and release is left unsigned.
 
-Debug builds can load made-up contacts and history for screenshots. It lives in memory only, so
-real data is untouched and returns on the next launch:
+Debug builds can load made-up contacts and history for screenshots, in memory only, so real data is
+untouched and returns on the next launch:
 
 ```
 adb shell am start -n com.guru.otprelay/.MainActivity --ez demo true
@@ -190,21 +165,20 @@ handlers. The one [exception](https://support.google.com/googleplay/android-deve
 that might fit — device automation — is meant for general automation apps, needs a declaration form
 and review, and auto-relaying passcodes resembles the fraud pattern reviewers screen for.
 
-The core function is the problem, not the code. Sideloading avoids the review, but not every limit:
-Play Protect blocks sideloaded SMS apps outright in several countries, as described under
-[Install](#install).
+The core function is the problem, not the code. Sideloading avoids the review, though not Play
+Protect — see [Install](#install).
 
 ## Notes
 
 - A reboot ends any running session, and only one session runs at a time.
 - "My number" is optional and typed once. It cannot be detected reliably, because most carriers do
   not write your number to the SIM.
-- Request links are verified App Links, so they open the app directly rather than a browser.
-  Verification is tied to both the host and the signing key: if you fork this, point `WEB_HOST` in
-  `RequestLink.kt` and the `<intent-filter>` in the manifest at a host you control, then serve your
-  own certificate fingerprint from `/.well-known/assetlinks.json` on it.
-- Some phones stop background apps aggressively, which can cut a session short. Settings has a
-  shortcut to Android's battery screen if that happens.
+- Request links are verified App Links, so they open the app rather than a browser. Verification is
+  tied to the host *and* the signing key, so forks need their own: point `WEB_HOST` in
+  `RequestLink.kt` and the manifest at a host you control, and serve your certificate fingerprint
+  from `/.well-known/assetlinks.json` there.
+- Some phones stop background apps aggressively, cutting a session short. Settings has a shortcut to
+  Android's battery screen.
 
 ## Licence
 
