@@ -14,8 +14,8 @@ android {
         applicationId = "com.guru.otprelay"
         minSdk = 26
         targetSdk = 36
-        versionCode = 6
-        versionName = "1.5"
+        versionCode = 7
+        versionName = "1.6"
     }
 
     // App Links verification pins the signing certificate, so release builds must be signed with
@@ -70,6 +70,9 @@ kotlin {
 dependencies {
     implementation("androidx.core:core-ktx:1.18.0")
     implementation("androidx.activity:activity-compose:1.12.4")
+    // Unlock confirmation before a number is allowed to receive codes. Brings in fragment,
+    // which is why MainActivity is a FragmentActivity.
+    implementation("androidx.biometric:biometric:1.1.0")
     implementation(platform("androidx.compose:compose-bom:2026.06.01"))
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.ui:ui")

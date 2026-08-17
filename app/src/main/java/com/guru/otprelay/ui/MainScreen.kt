@@ -165,18 +165,25 @@ fun MainScreen(request: Preset?, onRequestHandled: () -> Unit) {
                         cursor.getString(0).orEmpty().filter { it.isDigit() || it == '+' },
                         cursor.getString(1)?.takeIf { it.isNotBlank() },
                     )
-                    // Picking proves the contact exists in the phone book, which is what makes
-                    // this number allowed to receive OTPs.
-                    Store.saveContact(picked)
-                    selectedNumber = picked.number
+                    // Picking proves the contact exists in the phone book, and the unlock proves
+                    // it is you adding it. Together they are what makes this number allowed to
+                    // receive OTPs, so both happen before anything is saved.
+                    val request = verifying
+                    verifying = null
+                    confirmIdentity(
+                        context,
+                        "Allow ${picked.display} to receive your OTP codes",
+                    ) {
+                        Store.saveContact(picked)
+                        selectedNumber = picked.number
 
-                    // If we were verifying a request link, only continue when it is the same person.
-                    verifying?.let { pendingRequest ->
-                        verifying = null
-                        if (sameNumber(picked.number, pendingRequest.target.number)) {
-                            pasted = Preset(picked, pendingRequest.durationMillis)
-                        } else {
-                            unmatched = pendingRequest
+                        // For a request link, only continue when it is the same person.
+                        request?.let {
+                            if (sameNumber(picked.number, it.target.number)) {
+                                pasted = Preset(picked, it.durationMillis)
+                            } else {
+                                unmatched = it
+                            }
                         }
                     }
                 }
@@ -275,9 +282,14 @@ fun MainScreen(request: Preset?, onRequestHandled: () -> Unit) {
                     onSelect = { selectedNumber = it.number },
                     onDurationChange = { duration = it },
                     onStart = ::startSession,
+                    // Saving is gated like adding a contact, because a quick action is a
+                    // standing one-tap route to forwarding. Starting from one is not gated:
+                    // the check belongs where lasting permission is created, not where it is used.
                     onSave = { t, m ->
-                        Store.saveShortcut(t, m)
-                        Toast.makeText(context, "Shortcut saved", Toast.LENGTH_SHORT).show()
+                        confirmIdentity(context, "Save a one-tap shortcut for ${t.display}") {
+                            Store.saveShortcut(t, m)
+                            Toast.makeText(context, "Shortcut saved", Toast.LENGTH_SHORT).show()
+                        }
                     },
                     onShare = ::shareLink,
                     onDeleteShortcut = { Store.deleteShortcut(it) },

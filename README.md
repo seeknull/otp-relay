@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/seeknull/otp-relay/releases/latest"><b>Download APK — v1.5</b></a>
+  <a href="https://github.com/seeknull/otp-relay/releases/latest"><b>Download APK — v1.6</b></a>
   &nbsp;·&nbsp; Android 8.0+ &nbsp;·&nbsp; MIT
 </p>
 
@@ -48,12 +48,11 @@ It never starts by itself. You always tap. Codes only go to a name in your phone
 ## Install
 
 Download the APK from [Releases](https://github.com/seeknull/otp-relay/releases/latest) and open it.
-Two things get in the way, both of them Android's, not the app's.
+Two things get in the way, both Android's rather than the app's.
 
-**Play Protect may stop the install**, because the app declares `RECEIVE_SMS` — which it needs to
-read the code at all. This is the check meant to catch apps that quietly intercept passcodes, and it
-cannot see what makes this one different, so it stops the whole category. You get one of two
-dialogs:
+**Play Protect may stop the install**, because the app declares `RECEIVE_SMS`. That check exists to
+catch apps quietly intercepting passcodes; it cannot see what makes this one different, so it stops
+the category. You get one of two dialogs:
 
 | What you see | What it means |
 | --- | --- |
@@ -67,23 +66,25 @@ Past a hard block, best first:
   remove the app once scanning resumes, so prefer adb.
 - **[Shizuku](https://shizuku.rikka.app/) with InstallerX** — no computer needed, and it sticks.
 
-**Then lift the SMS restriction**, or the permission stays greyed out with no prompt ever shown:
+**Then lift the SMS restriction**, or the permission stays greyed out and no prompt appears:
 
 > Settings → Apps → OTP Relay → **⋮** → **Allow restricted settings**
 
-Now press start in the app. It checks everything a session needs — SMS access, notifications, a
-working SIM, battery limits — and explains anything missing with a button to the right screen.
+Now press start. The app checks everything a session needs — SMS access, notifications, a working
+SIM, battery limits — and explains anything missing with a button to the right screen.
 
 ## Features
 
 - Sessions of 5, 15, 30 or 60 minutes.
 - **Only saved contacts can receive OTPs.** The number must be chosen from your phone book, so a
   link from a stranger cannot point forwarding somewhere unknown.
+- **Adding a contact or saving a shortcut needs your fingerprint**, or whatever unlock the phone
+  uses. Starting a session does not — the check guards what grants access, not what uses it.
 - **No notification, no forwarding.** A session will not start without a visible notification, and
   stops itself within 5 seconds if that notification is ever blocked or removed.
 - Quick actions — save a person and a duration, start with one tap.
-- A short beep when a message is relayed, so you know without looking.
-- The recipient is texted when a session starts and when it ends.
+- A short beep on each relay, so you know without looking.
+- The recipient is texted when a session starts and ends.
 - Every message sent is logged, grouped by session, with how long it took to go out.
 - **Request links** — send someone a link; they send it back when they need an OTP, and it opens
   the approval prompt filled in. Nothing starts until you approve.
@@ -118,8 +119,12 @@ The usual caveat: whichever chat app you send a link through can see it, like an
 | `POST_NOTIFICATIONS` | Show the "forwarding is on" notification |
 | `FOREGROUND_SERVICE` | Keep listening for the length of the session |
 | `FOREGROUND_SERVICE_SPECIAL_USE` | The category that fits an SMS relay |
+| `USE_BIOMETRIC` | Confirm it is you before a contact is allowed |
 
-All five are required. Not requested: `READ_SMS`, `READ_CONTACTS`, `READ_PHONE_NUMBERS`,
+All are required. `USE_BIOMETRIC` is granted automatically, and the biometric library adds the
+older `USE_FINGERPRINT` beside it.
+
+Not requested: `READ_SMS`, `READ_CONTACTS`, `READ_PHONE_NUMBERS`, `INTERNET`,
 `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`.
 
 ## Build your own APK

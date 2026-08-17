@@ -2,8 +2,8 @@ package com.guru.otprelay
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.fragment.app.FragmentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.mutableStateOf
 import com.guru.otprelay.data.DemoData
@@ -14,7 +14,7 @@ import com.guru.otprelay.forwarding.ForwardingService
 import com.guru.otprelay.ui.MainScreen
 import com.guru.otprelay.ui.OtpRelayTheme
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
 
     private val request = mutableStateOf<Preset?>(null)
 
