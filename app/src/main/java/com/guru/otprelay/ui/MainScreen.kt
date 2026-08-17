@@ -136,6 +136,7 @@ fun MainScreen(request: Preset?, onRequestHandled: () -> Unit) {
     var unknown by remember { mutableStateOf<Preset?>(null) }
     var unmatched by remember { mutableStateOf<Preset?>(null) }
     var verifying by remember { mutableStateOf<Preset?>(null) }
+    var picked by remember { mutableStateOf<Target?>(null) }
     var problems by remember { mutableStateOf<List<Problem>>(emptyList()) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -161,31 +162,13 @@ fun MainScreen(request: Preset?, onRequestHandled: () -> Unit) {
             .query(uri, arrayOf(Phone.NUMBER, Phone.DISPLAY_NAME), null, null, null)
             ?.use { cursor ->
                 if (cursor.moveToFirst()) {
-                    val picked = Target(
+                    // Handed to a LaunchedEffect rather than confirmed here: this runs while
+                    // the result is still being delivered, and the unlock prompt commits a
+                    // fragment transaction, which throws until the activity is resumed again.
+                    picked = Target(
                         cursor.getString(0).orEmpty().filter { it.isDigit() || it == '+' },
                         cursor.getString(1)?.takeIf { it.isNotBlank() },
                     )
-                    // Picking proves the contact exists in the phone book, and the unlock proves
-                    // it is you adding it. Together they are what makes this number allowed to
-                    // receive OTPs, so both happen before anything is saved.
-                    val request = verifying
-                    verifying = null
-                    confirmIdentity(
-                        context,
-                        "Allow ${picked.display} to receive your OTP codes",
-                    ) {
-                        Store.saveContact(picked)
-                        selectedNumber = picked.number
-
-                        // For a request link, only continue when it is the same person.
-                        request?.let {
-                            if (sameNumber(picked.number, it.target.number)) {
-                                pasted = Preset(picked, it.durationMillis)
-                            } else {
-                                unmatched = it
-                            }
-                        }
-                    }
                 }
             }
     }
@@ -250,6 +233,26 @@ fun MainScreen(request: Preset?, onRequestHandled: () -> Unit) {
             Toast.makeText(context, "No request link on the clipboard", Toast.LENGTH_SHORT).show()
         } else {
             pasted = parsed
+        }
+    }
+
+    // Picking proves the contact exists in the phone book, and the unlock proves it is you
+    // adding it. Both have to hold before the number is allowed to receive codes.
+    LaunchedEffect(picked) {
+        val contact = picked ?: return@LaunchedEffect
+        picked = null
+        val request = verifying
+        verifying = null
+        confirmIdentity(context, "Allow ${contact.display} to receive your OTP codes") {
+            Store.saveContact(contact)
+            selectedNumber = contact.number
+            request?.let {
+                if (sameNumber(contact.number, it.target.number)) {
+                    pasted = Preset(contact, it.durationMillis)
+                } else {
+                    unmatched = it
+                }
+            }
         }
     }
 
