@@ -33,18 +33,54 @@ class OtpMatchTest {
     }
 
     @Test
+    fun `matches the longhand spellings of OTP`() {
+        assertTrue(OtpMatch.matches("Your One Time password is 481932"))
+        assertTrue(OtpMatch.matches("One-time-password: 481932"))
+        assertTrue(OtpMatch.matches("Use the one-time passcode 481932"))
+        assertTrue(OtpMatch.matches("Your one-time PIN is 4819"))
+        assertTrue(OtpMatch.matches("481932 is your one-time code"))
+        assertTrue(OtpMatch.matches("Onetime pass code 481932"))
+        assertTrue(OtpMatch.matches("Do not share OTPs with anyone. 481932"))
+    }
+
+    @Test
+    fun `matches the other names senders give the code`() {
+        assertTrue(OtpMatch.matches("Your verification code is 123456"))
+        assertTrue(OtpMatch.matches("Enter the sign-in code 99887 to continue"))
+        assertTrue(OtpMatch.matches("Your 2FA code: 481-932"))
+        assertTrue(OtpMatch.matches("Your passcode is 4321"))
+    }
+
+    @Test
+    fun `does not relay the big providers' account codes`() {
+        // Removed on request: these unlock a whole account, not one transaction.
+        assertFalse(OtpMatch.matches("G-481932 is your Google authentication code"))
+        assertFalse(OtpMatch.matches("Use auth code 55221"))
+        assertFalse(OtpMatch.matches("Your Instagram login code is 123 456"))
+        assertFalse(OtpMatch.matches("123456 is your Microsoft account security code"))
+        assertFalse(OtpMatch.matches("Your single-use code is 481932"))
+    }
+
+    @Test
     fun `does not match a word that merely contains the letters`() {
         // "hotpot" really does contain o-t-p, and a plain substring check forwarded it.
         assertFalse(OtpMatch.matches("dinner at the hotpot place"))
         assertFalse(OtpMatch.matches("otpppppp"))
         assertFalse(OtpMatch.matches("myotp"))
-        assertFalse(OtpMatch.matches("OTPs are secret"))
     }
 
     @Test
-    fun `ignores messages without the keyword`() {
-        assertFalse(OtpMatch.matches("Your verification code is 123456"))
-        assertFalse(OtpMatch.matches("Your one time password is 123456"))
+    fun `ignores everyday messages that mention codes or passwords`() {
+        // Bare "code", "password" and "pin" would drag half of ordinary traffic along.
+        assertFalse(OtpMatch.matches("dress code for the party is casual"))
+        assertFalse(OtpMatch.matches("your password was changed successfully"))
+        assertFalse(OtpMatch.matches("scan the barcode at pickup"))
+        // In India "PIN code" is a postal code, not a credential.
+        assertFalse(OtpMatch.matches("Delivery arriving at PIN code 560037"))
+        // A booking reference, not something to relay.
+        assertFalse(OtpMatch.matches("Flight confirmed, confirmation code X4B2Z"))
+        // "one ... time ... code" with other words between is not the phrase.
+        assertFalse(OtpMatch.matches("met him one more time, code review after"))
         assertFalse(OtpMatch.matches(""))
     }
 
