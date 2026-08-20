@@ -2,6 +2,7 @@ package com.guru.otprelay.ui
 
 import android.Manifest
 import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -93,6 +94,21 @@ import com.guru.otprelay.forwarding.ForwardingService
 import kotlinx.coroutines.delay
 
 private enum class Screen { HOME, HISTORY, SETTINGS }
+
+/**
+ * The app has no network access, by design, so it cannot know whether a newer build exists.
+ * Tapping the version hands that question to the browser: GitHub redirects /releases/latest
+ * to the newest release, and an APK downloaded there installs straight over this one.
+ */
+private fun openLatestRelease(context: Context) {
+    runCatching {
+        context.startActivity(
+            Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/seeknull/otp-relay/releases/latest")),
+        )
+    }.onFailure {
+        Toast.makeText(context, "No browser on this phone", Toast.LENGTH_SHORT).show()
+    }
+}
 
 private fun requiredPermissions(): Array<String> = buildList {
     add(Manifest.permission.RECEIVE_SMS)
@@ -482,11 +498,14 @@ private fun TopBar(screen: Screen, onOpen: (Screen) -> Unit, onBack: () -> Unit)
                         fontWeight = FontWeight.Bold,
                     )
                     Spacer(Modifier.width(6.dp))
+                    val context = LocalContext.current
                     Text(
                         "v${BuildConfig.VERSION_NAME}",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 4.dp),
+                        modifier = Modifier
+                            .clickable { openLatestRelease(context) }
+                            .padding(bottom = 4.dp),
                     )
                 }
                 Text(
